@@ -1,5 +1,7 @@
 # webservice
+<b> Prerequisities for building and deploying application: </b>
 
+You will require Python installed, with an IDE of your choice and POSTMAN to test the API endpoint.
 # Install Dependencies
 
 ```bash
@@ -20,7 +22,9 @@ $ source env/bin/activate
 (env) $ pytest
 ```
 
-# Access Health Check
+# Access Health Check via POSTMAN
+
+Set it to GET and enter the URL below
 
 GET - http://127.0.0.1:5000/healthz
 
