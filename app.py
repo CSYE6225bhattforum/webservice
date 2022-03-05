@@ -16,9 +16,17 @@ from sqlalchemy.orm import validates
 
 app = Flask(__name__)
 
+# Connection credentials
+db_user = 'root'
+
 # database config
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
+#app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@localhost/test'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['MYSQL_DATABASE_USER'] = 'root'
+app.config['MYSQL_DATABASE_PASSWORD'] = 'Foram@711'
+app.config['MYSQL_DATABASE_DB'] = 'test'
+app.config['MYSQL_DATABASE_HOST'] = 'localhost'
+
 db = SQLAlchemy(app)
 
 # serializer
@@ -37,8 +45,8 @@ class Users(db.Model):
     username = db.Column(db.String(255), unique=True, index=True)
     _password = db.Column("password", db.String(128), nullable=False)
 
-    first_name = db.Column(db.String, nullable=False, index=True)
-    last_name = db.Column(db.String, nullable=False, index=True)
+    first_name = db.Column(db.String(255), nullable=False, index=True)
+    last_name = db.Column(db.String(255), nullable=False, index=True)
 
     account_created = db.Column(
         db.DateTime,
@@ -182,4 +190,5 @@ def health():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    #app.run(debug=True,host="0.0.0.0",port="8080")
+    app.run(debug=True,host='0.0.0.0', port=8080)

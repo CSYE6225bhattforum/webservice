@@ -1,5 +1,6 @@
 # This workflow will install Python dependencies, run tests and lint with a single version of Python
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+# 
 
 name: Python application
 
@@ -15,6 +16,17 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:latest
+        env:
+          MYSQL_DATABASE: test
+          MYSQL_HOST: 127.0.0.1
+          MYSQL_USER: admin
+          MYSQL_PASSWORD: root
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
 
     steps:
     # This step checks out a copy of your repository.
@@ -29,6 +41,34 @@ jobs:
         python -m pip install --upgrade pip
         pip install flask pytest
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - name: Test with pytest
-      run: |
-        pytest
+    # - name: Test with pytest
+    #   run: |
+    #     pytest
+    #commenting pytest
+
+  packer_build:
+    name: Packer Build
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-1
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Python 3
+        uses: actions/setup-python@v1
+        with:
+          python-version: "3.10"
+      - name: Build file
+        run: python3 setup.py sdist
+      - name: Zip project
+        run: | 
+          zip -r release.zip . -x ".git/*" ".github/*" 'bin/*' 'lib/*' 'src/Users/__pycache__/*' 'src/server/__pycache__/*' 'src/webserver/__pycache__/*'
+          cp release.zip ami
+          cp requirements.txt ami
+      - name: Packer build
+        uses: ExitoLab/packer_build_action_aws@v0.2.10
+        with:
+          templateFile: 'amitemplate.json'
+          workingDir: 'ami'

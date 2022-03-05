@@ -1,4 +1,4 @@
-CSYE 6225 Assignment01 
+CSYE 6225 Assignment Cloud Computing.
 # webservice 
 <b> Prerequisities for building and deploying application: </b>
 
@@ -11,6 +11,7 @@ $ cd env/Scripts/
 $ . activate
 $ cd ../..
 (env) $ pip install -r requirements.txt
+(env) $ pip install mysql-connector-python
 ```
 
 # Run Application

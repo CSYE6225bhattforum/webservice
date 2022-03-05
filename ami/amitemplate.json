@@ -1,0 +1,115 @@
+{
+    "variables" : {
+        "region" : "us-east-1",
+        "aws_access_key_id": "{{ env `AWS_ACCESS_KEY_ID` }}",
+        "aws_secret_access_key": "{{ env `AWS_SECRET_ACCESS_KEY` }}"
+    },
+
+    "builders": [
+        {
+            "type": "amazon-ebs",
+            "profile" : "default",
+            "access_key": "{{ user `AWS_ACCESS_KEY_ID` }}",
+            "secret_key": "{{ user `AWS_SECRET_ACCESS_KEY` }}",
+            "region": "us-east-1",
+            "ami_name" : "My-custom-ami_{{timestamp}}",
+            "ami_description": "Creating & Running a Test Amazon Machine Image",
+            "source_ami": "ami-033b95fb8079dc481",
+            "instance_type": "t2.micro",
+            "ssh_username" : "ec2-user",
+            "ami_users" : [
+                "927025957594"
+            ],
+            "run_tags": {
+                "Name" : "packer-builder"
+            },
+            "ami_block_device_mappings": [
+                {
+                  "delete_on_termination": true,
+                  "device_name": "/dev/xvda",
+                  "volume_size": 20,
+                  "volume_type": "gp2"
+                }
+              ],
+              "tags" : {
+                  "Tool" : "Packer",
+                  "Author" : "user",
+                  "Environment" : "dev"
+                }
+            }
+        ],
+        "provisioners" : [
+            
+            {
+                "type": "file",
+                "source": "requirements.txt",
+                "destination": "requirements.txt"
+            },
+            {
+                "type": "file",
+                "source": "app-service.sh",
+                "destination": "app-service.sh"
+            },
+
+            {
+                "type": "file",
+                "source": "flaskapp.service",
+                "destination": "flaskapp.service"
+            },
+          {
+                "type": "file",
+                "source": "release.zip",
+                "destination": "release.zip"
+            },
+
+            {
+                "type": "shell",
+                "inline": [
+                    "sleep 30",
+                    "sudo yum update -y",
+                    "sudo yum groupinstall 'Development Tools' -y",
+                    "sudo yum install openssl-devel libffi-devel bzip2-devel wget -y",
+                    "sudo yum install python3",
+
+                    "echo '****************************************************************************Python is installed ****************************************************************************'",
+                    "sudo yum -y install python-pip",
+
+                    "echo '****************************************************************************PIP is installed ****************************************************************************'",
+                    "sudo yum -y install https://dev.mysql.com/get/mysql80-community-release-el7-5.noarch.rpm",
+
+                    "echo '****************************************************************************Install epel*********************************************************************************'",
+
+                    "sudo amazon-linux-extras install epel",
+
+                    "echo 'Install community server'",
+
+                    "sudo yum -y install mysql-community-server",
+
+                    "sudo systemctl enable --now mysqld",
+
+                    "systemctl status mysqld",
+
+                    "passwords=$(sudo grep 'temporary password' /var/log/mysqld.log | awk {'print $13'})",
+
+                    "mysql --connect-expired-password -u root -p$passwords -e \"ALTER USER 'root'@'localhost' IDENTIFIED BY 'Foram@711';\"",
+
+                    "mysql -u root -pForam@711 -e \"create database test;\"",
+                    
+                    "unzip release.zip -d webapp",
+                  
+                    "sudo cp flaskapp.service /etc/systemd/system",
+                  
+                    "cp requirements.txt webapp",
+                  
+                    "sudo systemctl start flaskapp.service",
+                  
+                    "sudo systemctl enable flaskapp.service",
+                    
+                    "sudo systemctl status flaskapp.service"
+                    
+                  ]
+              
+                  }
+        ]
+        
+}
