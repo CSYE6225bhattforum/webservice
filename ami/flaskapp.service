@@ -1,0 +1,13 @@
+[Unit]
+Description=Flask App Service
+After=multi-user.target
+StartLimitIntervalSec=400
+StartLimitBurst=3
+
+[Service]
+Type=idle
+User=ec2-user
+ExecStart=/usr/bin/bash /home/ec2-user/app-service.sh
+
+[Install]
+WantedBy=multi-user.target
