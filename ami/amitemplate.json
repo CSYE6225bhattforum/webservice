@@ -14,7 +14,7 @@
             "region": "us-east-1",
             "ami_name" : "My-custom-ami_{{timestamp}}",
             "ami_description": "Creating & Running a Test Amazon Machine Image",
-            "source_ami": "ami-033b95fb8079dc481",
+            "source_ami": "ami-0c02fb55956c7d316",
             "instance_type": "t2.micro",
             "ssh_username" : "ec2-user",
             "ami_users" : [
@@ -50,18 +50,16 @@
                 "source": "app-service.sh",
                 "destination": "app-service.sh"
             },
-
             {
                 "type": "file",
                 "source": "flaskapp.service",
                 "destination": "flaskapp.service"
             },
-          {
+            {
                 "type": "file",
                 "source": "release.zip",
                 "destination": "release.zip"
             },
-
             {
                 "type": "shell",
                 "inline": [
@@ -75,37 +73,18 @@
                     "sudo yum -y install python-pip",
 
                     "echo '****************************************************************************PIP is installed ****************************************************************************'",
-                    "sudo yum -y install https://dev.mysql.com/get/mysql80-community-release-el7-5.noarch.rpm",
-
-                    "echo '****************************************************************************Install epel*********************************************************************************'",
-
-                    "sudo amazon-linux-extras install epel",
-
-                    "echo 'Install community server'",
-
-                    "sudo yum -y install mysql-community-server",
-
-                    "sudo systemctl enable --now mysqld",
-
-                    "systemctl status mysqld",
-
-                    "passwords=$(sudo grep 'temporary password' /var/log/mysqld.log | awk {'print $13'})",
-
-                    "mysql --connect-expired-password -u root -p$passwords -e \"ALTER USER 'root'@'localhost' IDENTIFIED BY 'Foram@711';\"",
-
-                    "mysql -u root -pForam@711 -e \"create database test;\"",
-                    
+                                        
                     "unzip release.zip -d webapp",
                   
                     "sudo cp flaskapp.service /etc/systemd/system",
+
+                    "sudo yum -y install polkit",
                   
                     "cp requirements.txt webapp",
                   
-                    "sudo systemctl start flaskapp.service",
-                  
-                    "sudo systemctl enable flaskapp.service",
+                    "cd ~",
                     
-                    "sudo systemctl status flaskapp.service"
+                    "sed -i 's/\r//g' app-service.sh"
                     
                   ]
               

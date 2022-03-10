@@ -1,9 +1,11 @@
-!#/bin/bash
+#!/bin/bash
 cd ~
-cd webapp
+cd webapp/release
 python3 -m venv env
 cd env/bin
 . activate
 cd ../..
-pip install -r requirements.txt
+python3 -m pip install --upgrade pip
+pip3 install -r requirements.txt
 python3 app.py
+
