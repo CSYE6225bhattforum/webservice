@@ -1,6 +1,6 @@
 #!/bin/bash
 cd ~
-cd webapp/release
+cd webapp/
 python3 -m venv env
 cd env/bin
 . activate
