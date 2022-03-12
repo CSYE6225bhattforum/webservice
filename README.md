@@ -3,7 +3,7 @@ CSYE 6225 Assignment Cloud Computing.
 <b> Prerequisities for building and deploying application: </b>
 
 You will require Python installed, with an IDE of your choice and POSTMAN to test the API endpoint.
-# Install Dependencies
+# Install Dependencies..
 
 ```bash
 $ python3 -m venv env
