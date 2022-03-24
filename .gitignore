@@ -103,9 +103,7 @@ celerybeat.pid
 
 # Environments
 .venv
-env/
 venv/
-ENV/
 env.bak/
 venv.bak/
 
@@ -135,8 +133,8 @@ __pycache__/
 
 # Environments
 
-env/
-ENV/
+
+
 env.bak/
 
 # Byte-compiled / optimized / DLL files
@@ -255,9 +253,9 @@ celerybeat.pid
 # Environments
 
 .venv
-env/
+
 venv/
-ENV/
+
 env.bak/
 venv.bak/
 

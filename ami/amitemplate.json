@@ -50,15 +50,12 @@
                 "source": "app-service.sh",
                 "destination": "app-service.sh"
             },
+           
             {
                 "type": "file",
-                "source": "flaskapp.service",
-                "destination": "flaskapp.service"
-            },
-            {
-                "type": "file",
-                "source": "release.zip",
-                "destination": "release.zip"
+                "source": "webservice-0.0.1.tar.gz",
+                "destination": "webservice-0.0.1.tar.gz"
+
             },
             {
                 "type": "shell",
@@ -73,10 +70,10 @@
                     "sudo yum -y install python-pip",
 
                     "echo '****************************************************************************PIP is installed ****************************************************************************'",
-                                        
-                    "unzip release.zip -d webapp",
-                  
-                    "sudo cp flaskapp.service /etc/systemd/system",
+
+                    
+                    "tar xvzf webservice-0.0.1.tar.gz",
+
 
                     "sudo yum -y install polkit",
                   

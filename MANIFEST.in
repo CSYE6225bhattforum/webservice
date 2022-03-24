@@ -1,0 +1,7 @@
+include requirements.txt
+include LICENSE
+include s3config.py
+include app.py
+include config.py
+include test_healthz.py
+include env
