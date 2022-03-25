@@ -1,4 +1,4 @@
-CSYE 6225 Assignment Cloud Computing.
+CSYE 6225 Assignment Cloud Computing
 # webservice 
 <b> Prerequisities for building and deploying application: </b>
 
