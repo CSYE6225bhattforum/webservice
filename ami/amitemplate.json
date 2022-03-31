@@ -14,7 +14,7 @@
             "region": "us-east-1",
             "ami_name" : "My-custom-ami_{{timestamp}}",
             "ami_description": "Creating & Running a Test Amazon Machine Image",
-            "source_ami": "ami-033b95fb8079dc481",
+            "source_ami": "ami-0c02fb55956c7d316",
             "instance_type": "t2.micro",
             "ssh_username" : "ec2-user",
             "ami_users" : [
@@ -45,68 +45,40 @@
                 "source": "requirements.txt",
                 "destination": "requirements.txt"
             },
-            {
-                "type": "file",
-                "source": "app-service.sh",
-                "destination": "app-service.sh"
-            },
-
-            {
-                "type": "file",
-                "source": "flaskapp.service",
-                "destination": "flaskapp.service"
-            },
-          {
-                "type": "file",
-                "source": "release.zip",
-                "destination": "release.zip"
-            },
-
+                       
             {
                 "type": "shell",
                 "inline": [
                     "sleep 30",
+                    
                     "sudo yum update -y",
-                    "sudo yum groupinstall 'Development Tools' -y",
-                    "sudo yum install openssl-devel libffi-devel bzip2-devel wget -y",
-                    "sudo yum install python3",
 
-                    "echo '****************************************************************************Python is installed ****************************************************************************'",
-                    "sudo yum -y install python-pip",
+                    "echo '********************** yum updated ********************'",
 
-                    "echo '****************************************************************************PIP is installed ****************************************************************************'",
-                    "sudo yum -y install https://dev.mysql.com/get/mysql80-community-release-el7-5.noarch.rpm",
+                    "sudo yum install -y ruby",
 
-                    "echo '****************************************************************************Install epel*********************************************************************************'",
+                    "echo '********************** ruby installed ********************'",
 
-                    "sudo amazon-linux-extras install epel",
+                    "sudo yum install -y wget",
 
-                    "echo 'Install community server'",
+                    "echo '********************** install -y wget ********************'",
 
-                    "sudo yum -y install mysql-community-server",
+                    "wget https://aws-codedeploy-us-east-1.s3.us-east-1.amazonaws.com/latest/install",
 
-                    "sudo systemctl enable --now mysqld",
+                    "echo '********************** Bucket-name ********************'",
 
-                    "systemctl status mysqld",
+                    "chmod +x ./install",
 
-                    "passwords=$(sudo grep 'temporary password' /var/log/mysqld.log | awk {'print $13'})",
+                    "echo '********************** +x ./installed ********************'",
 
-                    "mysql --connect-expired-password -u root -p$passwords -e \"ALTER USER 'root'@'localhost' IDENTIFIED BY 'Foram@711';\"",
+                    "sudo ./install auto",
 
-                    "mysql -u root -pForam@711 -e \"create database test;\"",
-                    
-                    "unzip release.zip -d webapp",
-                  
-                    "sudo cp flaskapp.service /etc/systemd/system",
-                  
-                    "cp requirements.txt webapp",
-                  
-                    "sudo systemctl start flaskapp.service",
-                  
-                    "sudo systemctl enable flaskapp.service",
-                    
-                    "sudo systemctl status flaskapp.service"
-                    
+                    "echo '**********************  Installed the latest version of the CodeDeploy agent ********************'",
+
+                    "sudo service codedeploy-agent start ",
+
+                    "echo '********************** Service is running: codedeploy-agent started ********************'"
+
                   ]
               
                   }
