@@ -40,8 +40,8 @@ bcrypt = Bcrypt()
 # User Database Model
 class Users(db.Model):
     id = db.Column(
-        db.String(255), primary_key=True, 
-        index=True, unique=True
+        db.String(255), primary_key=True, unique=True,
+        index=True
     )
     username = db.Column(db.String(255), unique=True, index=True)
     _password = db.Column("password", db.String(128), nullable=False)
@@ -245,13 +245,16 @@ def create_user_image():
         # get or create image object for database
         image = db.session.query(Images).filter_by(user_id=user.id).first()
         if not image:
+
             image = Images(id=str(uuid.uuid4()), user_id=user.id)
+
         else:
             message, status = delete_image(f"{user.id}/{image.filename}")
             db.session.delete(image)
             db.session.commit()
-            image = Images(user_id=user.id)
-        
+
+            image = Images(user_id=user.id)             
+
         image.filename = filename
         image.url = url
         # add image object to database session

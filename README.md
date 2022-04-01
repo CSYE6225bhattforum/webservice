@@ -27,6 +27,7 @@ or
 
 ```bash
 (env) $ pytest
+(env) python -m pytest test_healthz.py
 ```
 
 # Access Health Check via POSTMAN
@@ -74,3 +75,6 @@ Code under `.github/workflows/python-app.yml`
 It installs dependencies and run the test on commit on `main` branch
 
 You can check the status on github portal and "Actions" Tab
+
+
+"unzip release.zip -d webapp",
