@@ -184,7 +184,7 @@ def create_user():
 
 
 # Health check GET API
-@app.route("/healthz", methods=['GET'])
+@app.route("/health", methods=['GET'])
 def health():
     return "200: Service is healthy and running ", 200
 
