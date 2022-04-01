@@ -9,16 +9,29 @@ files:
       destination: /home/ec2-user/
 file_exists_behavior: OVERWRITE
 
+# hooks:
+#   # AfterInstall: 
+#   #   - location: scripts/install_dependencies
+#   #     timeout: 180 
+#   #     runas: root
+#   ApplicationStart:
+#     - location: scripts/start_server
+#       timeout: 300
+#       runas: ec2-user
+#   ApplicationStop:
+#     - location: scripts/stop_server
+#       timeout: 300
+#       runas: ec2-user
 hooks:
-  # AfterInstall: 
-  #   - location: scripts/install_dependencies
-  #     timeout: 180 
-  #     runas: root
-  ApplicationStart:
-    - location: scripts/start_server
+  ApplicationStop:
+    - location: scripts/stop_server.sh
       timeout: 300
       runas: ec2-user
-  ApplicationStop:
-    - location: scripts/stop_server
+  BeforeInstall:
+    - location: scripts/stop_server.sh
+      timeout: 300
+      runas: ec2-user
+  ApplicationStart:
+    - location: scripts/start_server.sh
       timeout: 300
       runas: ec2-user
