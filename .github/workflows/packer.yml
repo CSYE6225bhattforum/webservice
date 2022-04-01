@@ -94,38 +94,38 @@ jobs:
       #     templateFile: 'amitemplate.json'
       #     workingDir: 'ami'
 
-      # - name: Configure AWS credentials
-      #   uses: aws-actions/configure-aws-credentials@v1
-      #   with:
-      #     aws-access-key-id: ${{ secrets.GITAWS_ACCESS_KEY_ID }}
-      #     aws-secret-access-key: ${{ secrets.GITAWS_SECRET_ACCESS_KEY }}
-      #     aws-region: us-east-1
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-access-key-id: ${{ secrets.GITAWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.GITAWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      # - name: Create CodeDeploy Deployment
-      #   id: deploy
-      #   run: |
-      #     aws deploy create-deployment --application-name csye6225-webapp --deployment-config-name CodeDeployDefault.AllAtOnce --deployment-group-name csye6225-webapp-deployment --s3-location bucket=${{secrets.BUCKET_NAME}},bundleType=zip,key=csye6225-webapp-${{ github.sha }}.zip --region us-east-1
+      # - name: Configure AWS credentials
+      #   uses: aws-actions/configure-aws-credentials@v1
+      #   with:
+      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     aws-region: us-east-1
 
-      - name: Code deploy
+      - name: Create CodeDeploy Deployment
+        id: deploy
         run: |
-          output=$(aws deploy create-deployment \
-          --application-name  ${{ env.CODEDEPLOY_APPLICATION_NAME }} \
-          --deployment-config-name CodeDeployDefault.AllAtOnce \
-          --deployment-group-name ${{ env.CODEDEPLOY_GROUP_NAME }} \
-          --s3-location bucket=${{ env.BUCKET_NAME }},bundleType=zip,key=${{ env.ARTIFACT_NAME }} \
-          --output json)
+          aws deploy create-deployment --application-name csye6225-webapp --deployment-config-name CodeDeployDefault.AllAtOnce --deployment-group-name csye6225-webapp-deployment --s3-location bucket=${{secrets.BUCKET_NAME}},bundleType=zip,key=csye6225-webapp-${{ github.sha }}.zip --region us-east-1
 
-          echo $output
+      # - name: Code deploy
+      #   run: |
+      #     output=$(aws deploy create-deployment \
+      #     --application-name  ${{ env.CODEDEPLOY_APPLICATION_NAME }} \
+      #     --deployment-config-name CodeDeployDefault.AllAtOnce \
+      #     --deployment-group-name ${{ env.CODEDEPLOY_GROUP_NAME }} \
+      #     --s3-location bucket=${{ env.BUCKET_NAME }},bundleType=zip,key=${{ env.ARTIFACT_NAME }} \
+      #     --output json)
 
-          dId=$(echo $output | jq -r '.deploymentId')
+      #     echo $output
 
-          aws deploy wait deployment-successful --deployment-id $dId
+      #     dId=$(echo $output | jq -r '.deploymentId')
+
+      #     aws deploy wait deployment-successful --deployment-id $dId
 
   

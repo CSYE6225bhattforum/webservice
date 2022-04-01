@@ -2,7 +2,11 @@ version: 0.0
 os: linux 
 files:
     - source: dist/webservice-0.0.1.tar.gz
-      destination: /home/ec2-user/dist
+      destination: /home/ec2-user/
+    - source: app-service.sh
+      destination: /home/ec2-user/
+    - source: requirements.txt
+      destination: /home/ec2-user/
 file_exists_behavior: OVERWRITE
 
 hooks:
@@ -13,8 +17,8 @@ hooks:
   ApplicationStart:
     - location: scripts/start_server
       timeout: 300
-      runas: root
+      runas: ec2-user
   ApplicationStop:
     - location: scripts/stop_server
       timeout: 300
-      runas: root
+      runas: ec2-user
