@@ -45,7 +45,7 @@
                 "source": "requirements.txt",
                 "destination": "requirements.txt"
             },
-                       
+          
             {
                 "type": "shell",
                 "inline": [
@@ -79,6 +79,8 @@
 
                     "echo '********************** Service is running: codedeploy-agent started ********************'"
 
+
+               
                   ]
               
                   }
