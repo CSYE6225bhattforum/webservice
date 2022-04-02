@@ -10,9 +10,10 @@ setup(
     version='0.0.1',
     description='A very basic webservice',
     long_description=long_description,
-    author='Forum Bhatt',
+    author='FORUM BHATT',
     author_email='bhatt.f@northeastern.edu',
     packages=find_packages(),
+    license='MIT',
     install_requires=[
         'flask', 
         'pytest', 
