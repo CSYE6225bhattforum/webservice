@@ -1,19 +1,13 @@
 # This workflow will install Python dependencies, run tests and lint with a single version of Python
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+# 
 
 name: Python application
 
 on:
   push:
     branches:
-      - main
-
-
-env:
-  ARTIFACT_NAME: csye6225-webapp-${{ github.sha }}.zip
-  CODEDEPLOY_APPLICATION_NAME: csye6225-webapp
-  CODEDEPLOY_GROUP_NAME: csye6225-webapp-deployment
-  BUCKET_NAME: codedeploy.forumbhatt.me
+      - maintest
 
 jobs:
   build:
@@ -64,20 +58,7 @@ jobs:
         with:
           python-version: "3.10"
       - name: Build file
-        run: | 
-          python setup.py sdist
-          mkdir artifacts
-          zip -r csye6225-webapp-${{ github.sha }}.zip dist/webservice-0.0.1.tar.gz ./appspec.yml ./scripts/*.sh ./ami/app-service.sh ./ami/requirements.txt
-          cp csye6225-webapp-${{ github.sha }}.zip artifacts/
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.GITAWS_ACCESS_KEY_ID}}
-          aws-secret-access-key: ${{ secrets.GITAWS_SECRET_ACCESS_KEY}}
-          aws-region: us-east-1
-      - name: Copy artifacts to S3
-        run: | 
-          aws s3 sync ./artifacts s3://${{secrets.BUCKET_NAME}}
+        run: python setup.py sdist
       - name: copy build file
         uses: canastro/copy-file-action@master
         with:
@@ -88,44 +69,8 @@ jobs:
         with:
           source: "requirements.txt"
           target: "ami/requirements.txt"
-      # - name: Packer build
-      #   uses: ExitoLab/packer_build_action_aws@v0.2.10
-      #   with:
-      #     templateFile: 'amitemplate.json'
-      #     workingDir: 'ami'
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+      - name: Packer build
+        uses: ExitoLab/packer_build_action_aws@v0.2.10
         with:
-          aws-access-key-id: ${{ secrets.GITAWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.GITAWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
-      # - name: Configure AWS credentials
-      #   uses: aws-actions/configure-aws-credentials@v1
-      #   with:
-      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #     aws-region: us-east-1
-
-      - name: Create CodeDeploy Deployment
-        id: deploy
-        run: |
-          aws deploy create-deployment --application-name csye6225-webapp --deployment-config-name CodeDeployDefault.AllAtOnce --deployment-group-name csye6225-webapp-deployment --s3-location bucket=${{secrets.BUCKET_NAME}},bundleType=zip,key=csye6225-webapp-${{ github.sha }}.zip --region us-east-1
-
-      # - name: Code deploy
-      #   run: |
-      #     output=$(aws deploy create-deployment \
-      #     --application-name  ${{ env.CODEDEPLOY_APPLICATION_NAME }} \
-      #     --deployment-config-name CodeDeployDefault.AllAtOnce \
-      #     --deployment-group-name ${{ env.CODEDEPLOY_GROUP_NAME }} \
-      #     --s3-location bucket=${{ env.BUCKET_NAME }},bundleType=zip,key=${{ env.ARTIFACT_NAME }} \
-      #     --output json)
-
-      #     echo $output
-
-      #     dId=$(echo $output | jq -r '.deploymentId')
-
-      #     aws deploy wait deployment-successful --deployment-id $dId
-
- 
+          templateFile: 'amitemplate.json'
+          workingDir: 'ami'
