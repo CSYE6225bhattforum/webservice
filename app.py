@@ -140,7 +140,7 @@ def authenticate(username, password):
 
 
 # Non-authenticated create user POST API
-@app.route("/v1/user", methods=['POST'])
+@app.route("/v2/users", methods=['POST'])
 def create_user():
     """Returns created user or validation error message."""
 
@@ -295,7 +295,7 @@ def user_delete_image():
 
 
 # Health check GET API
-@app.route("/health", methods=['GET'])
+@app.route("/healthzz", methods=['GET'])
 def health():
     return "200: Service is healthy and running ", 200
 
