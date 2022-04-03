@@ -295,7 +295,7 @@ def user_delete_image():
 
 
 # Health check GET API
-@app.route("/healthzz", methods=['GET'])
+@app.route("/heal", methods=['GET'])
 def health():
     return "200: Service is healthy and running ", 200
 
