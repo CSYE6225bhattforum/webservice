@@ -78,6 +78,7 @@ jobs:
       - name: Copy artifacts to S3
         run: | 
           aws s3 sync ./artifacts s3://${{secrets.BUCKET_NAME}}
+
       - name: copy build file
         uses: canastro/copy-file-action@master
         with:
@@ -129,3 +130,4 @@ jobs:
       #     aws deploy wait deployment-successful --deployment-id $dId
 
  
+
