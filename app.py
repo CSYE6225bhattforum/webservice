@@ -140,7 +140,7 @@ def authenticate(username, password):
 
 
 # Non-authenticated create user POST API
-@app.route("/v2/users", methods=['POST'])
+@app.route("/v1/user", methods=['POST'])
 def create_user():
     """Returns created user or validation error message."""
 
