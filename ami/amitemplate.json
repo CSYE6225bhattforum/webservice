@@ -58,6 +58,7 @@
                 "destination": "webservice-0.0.1.tar.gz"
 
             },
+
             {
 				"type": "file",
 				"source": "cloudwatch-config.json",
@@ -70,6 +71,7 @@
                     "sleep 30",
 
                     "sudo mv cloudwatch-config.json /opt/",
+
                     
                     "sudo yum update -y",
 
@@ -126,6 +128,8 @@
                     "echo '**********************Amazon Cloudwatch Agent Installed**********************************'",
 
                     "sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/cloudwatch-config.json -s"
+
+                    "echo '********************** Service is running: codedeploy-agent started ********************'"
                
                   ]
               

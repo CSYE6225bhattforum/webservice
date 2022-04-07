@@ -318,6 +318,7 @@ def user_delete_image():
 
 
 # Health check GET API
+
 @app.route("/health", methods=['GET'])
 def health():
     logger=logging.getLogger()
