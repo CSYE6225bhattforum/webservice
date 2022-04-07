@@ -45,15 +45,58 @@
                 "source": "requirements.txt",
                 "destination": "requirements.txt"
             },
-                       
+
+            {
+                "type": "file",
+                "source": "app-service.sh",
+                "destination": "app-service.sh"
+            },
+           
+            {
+                "type": "file",
+                "source": "webservice-0.0.1.tar.gz",
+                "destination": "webservice-0.0.1.tar.gz"
+
+            },
+
+            {
+				"type": "file",
+				"source": "cloudwatch-config.json",
+				"destination": "cloudwatch-config.json"
+			},
+
             {
                 "type": "shell",
                 "inline": [
                     "sleep 30",
+
+                    "sudo mv cloudwatch-config.json /opt/",
                     
                     "sudo yum update -y",
 
                     "echo '********************** yum updated ********************'",
+
+                    "sudo yum groupinstall 'Development Tools' -y",
+
+                    "sudo yum install openssl-devel libffi-devel bzip2-devel wget -y",
+
+                    "sudo yum install python3",
+
+                    "echo '*******************************************************Python is installed ****************************************************************************'",
+                    
+                    "sudo yum -y install python-pip",
+
+                    "echo '********************************************************PIP is installed ****************************************************************************'",
+
+                    "tar xvzf webservice-0.0.1.tar.gz",
+
+                    "sudo yum -y install polkit",
+                  
+                    "cp requirements.txt webapp",
+                  
+                    "cd ~",
+                    
+                    "sed -i 's/\r//g' app-service.sh",
 
                     "sudo yum install -y ruby",
 
@@ -77,8 +120,14 @@
 
                     "sudo service codedeploy-agent start ",
 
-                    "echo '********************** Service is running: codedeploy-agent started ********************'"
+                    "echo '********************** Service is running: codedeploy-agent started ********************'",
 
+                    "sudo yum install -y amazon-cloudwatch-agent",
+
+                    "echo '**********************Amazon Cloudwatch Agent Installed**********************************'",
+
+                    "sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/cloudwatch-config.json -s"
+               
                   ]
               
                   }

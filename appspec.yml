@@ -1,20 +1,28 @@
 version: 0.0 
 os: linux 
 files:
-    - source: dist/webservice-0.0.1.tar.gz
-      destination: /home/ec2-user/dist
+    - source: ./dist/webservice-0.0.1.tar.gz
+      destination: /home/ec2-user/
+    - source: ./ami/app-service.sh
+      destination: /home/ec2-user/
+    - source: ./ami/requirements.txt
+      destination: /home/ec2-user/
 file_exists_behavior: OVERWRITE
 
 hooks:
-  # AfterInstall: 
-  #   - location: scripts/install_dependencies
-  #     timeout: 180 
-  #     runas: root
+  # BeforeInstall:
+  #   - location: ./scripts/stop_server.sh
+  #     timeout: 300
+  #     runas: ec2-user
+  AfterInstall: 
+    - location: ./scripts/start_server.sh
+      timeout: 300 
+      runas: ec2-user
   ApplicationStart:
-    - location: scripts/start_server
+    - location: ./scripts/application_start.sh
       timeout: 300
-      runas: root
+      runas: ec2-user
   ApplicationStop:
-    - location: scripts/stop_server
+    - location: ./scripts/stop_server.sh
       timeout: 300
-      runas: root
+      runas: ec2-user
