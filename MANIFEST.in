@@ -5,3 +5,7 @@ include app.py
 include config.py
 include test_healthz.py
 include env
+include scripts
+include appspec.yml
+include ami
+

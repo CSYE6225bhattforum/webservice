@@ -45,6 +45,7 @@
                 "source": "requirements.txt",
                 "destination": "requirements.txt"
             },
+
             {
                 "type": "file",
                 "source": "app-service.sh",
@@ -57,23 +58,29 @@
                 "destination": "webservice-0.0.1.tar.gz"
 
             },
+
             {
                 "type": "shell",
                 "inline": [
                     "sleep 30",
+                    
                     "sudo yum update -y",
+
+                    "echo '********************** yum updated ********************'",
+
                     "sudo yum groupinstall 'Development Tools' -y",
+
                     "sudo yum install openssl-devel libffi-devel bzip2-devel wget -y",
+
                     "sudo yum install python3",
 
-                    "echo '****************************************************************************Python is installed ****************************************************************************'",
+                    "echo '*******************************************************Python is installed ****************************************************************************'",
+                    
                     "sudo yum -y install python-pip",
 
-                    "echo '****************************************************************************PIP is installed ****************************************************************************'",
+                    "echo '********************************************************PIP is installed ****************************************************************************'",
 
-                    
                     "tar xvzf webservice-0.0.1.tar.gz",
-
 
                     "sudo yum -y install polkit",
                   
@@ -81,8 +88,32 @@
                   
                     "cd ~",
                     
-                    "sed -i 's/\r//g' app-service.sh"
-                    
+                    "sed -i 's/\r//g' app-service.sh",
+
+                    "sudo yum install -y ruby",
+
+                    "echo '********************** ruby installed ********************'",
+
+                    "sudo yum install -y wget",
+
+                    "echo '********************** install -y wget ********************'",
+
+                    "wget https://aws-codedeploy-us-east-1.s3.us-east-1.amazonaws.com/latest/install",
+
+                    "echo '********************** Bucket-name ********************'",
+
+                    "chmod +x ./install",
+
+                    "echo '********************** +x ./installed ********************'",
+
+                    "sudo ./install auto",
+
+                    "echo '**********************  Installed the latest version of the CodeDeploy agent ********************'",
+
+                    "sudo service codedeploy-agent start ",
+
+                    "echo '********************** Service is running: codedeploy-agent started ********************'"
+               
                   ]
               
                   }
