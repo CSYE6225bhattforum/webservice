@@ -30,7 +30,7 @@ import logging
 import sys
 
 #logging.basicConfig(filename='C:/Users/foram/OneDrive/Desktop/csye6225.log', encoding='utf-8', level=logging.INFO)
-logging.basicConfig(filename='/home/ec2-user/csye6225.log', encoding='utf-8', level=logging.INFO)
+logging.basicConfig(filename='/home/ec2-user/csye6225.log', level=logging.INFO)
 
 
 app = Flask(__name__)
@@ -156,6 +156,7 @@ def create_user():
     """Returns created user or validation error message."""
 
     try:
+        logger=logging.getLogger()
         logger.info("creating user records")
         statsd.incr('endpoint.user.http.post')
         # creates user object
@@ -190,6 +191,7 @@ def authenticated_user():
     """Returns authenticated stored or updated user details."""
 
     try:
+        logger=logging.getLogger()
         logger.info("authenticating user")
         # current_user returns user object as returned from authenticator
         user = auth.current_user()
@@ -205,6 +207,7 @@ def authenticated_user():
 
             # commit above changes to user in database
             db.session.commit()
+        logger=logging.getLogger()
         statsd.incr('endpoint.user.http.get')
         logger.info("user authenticated")
 
@@ -230,6 +233,7 @@ def get_user_image():
     """Returns authenticated stored user image details."""
 
     try:
+        logger=logging.getLogger()
         logger.info("fetching user profile image")
         statsd.incr('endpoint.image.http.get')
         # current_user returns user object as returned from authenticator
@@ -250,6 +254,7 @@ def create_user_image():
     """Returns uploaded user image details."""
 
     try:
+        logger=logging.getLogger()
         logger.info("profile creation endpoint started execution")
         statsd.incr('endpoint.user.image.http.post')        
         # current_user returns user object as returned from authenticator
@@ -296,6 +301,7 @@ def user_delete_image():
     """Returns user image delete confirmation."""
 
     try:
+        logger=logging.getLogger()
         logger.info("image delete endpoint started execution")
         statsd.incr('endpoint.image.http.delete')
         # current_user returns user object as returned from authenticator
@@ -312,6 +318,7 @@ def user_delete_image():
             db.session.delete(image)
             db.session.commit()
             return message, status
+        logger=logging.getLogger()
         logger.info("image deleted")
     except Exception as e:
         return f"Bad Request: {e}", 400

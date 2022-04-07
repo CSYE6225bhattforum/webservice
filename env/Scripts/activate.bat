@@ -8,7 +8,7 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
-set VIRTUAL_ENV=C:\Users\foram\OneDrive\Documents\Assignment5\webapp\env
+set VIRTUAL_ENV=C:\Users\foram\OneDrive\Documents\dummyorga8\webservice\env
 
 if not defined PROMPT set PROMPT=$P$G
 

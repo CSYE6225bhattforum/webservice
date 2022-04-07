@@ -38,7 +38,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="C:\Users\foram\OneDrive\Documents\Assignment5\webapp\env"
+VIRTUAL_ENV="C:\Users\foram\OneDrive\Documents\dummyorga8\webservice\env"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"
