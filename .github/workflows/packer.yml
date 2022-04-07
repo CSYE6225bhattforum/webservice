@@ -7,7 +7,13 @@ name: Python application
 on:
   push:
     branches:
-      - main
+      - maintest
+
+env:
+  ARTIFACT_NAME: csye6225-webapp-${{ github.sha }}.zip
+  CODEDEPLOY_APPLICATION_NAME: csye6225-webapp
+  CODEDEPLOY_GROUP_NAME: csye6225-webapp-deployment
+  BUCKET_NAME: codedeploy.forumbhatt.me
 
 env:
   ARTIFACT_NAME: csye6225-webapp-${{ github.sha }}.zip
