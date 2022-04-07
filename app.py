@@ -1,5 +1,8 @@
+from asyncio.log import logger
 import uuid
 import os
+import statsd
+
 
 from flask import Flask
 
@@ -21,6 +24,14 @@ from sqlalchemy.orm import validates
 from config import AppConfig
 from s3config import delete_image, upload_file
 from werkzeug.utils import secure_filename
+
+from statsd import StatsClient
+import logging
+import sys
+
+#logging.basicConfig(filename='C:/Users/foram/OneDrive/Desktop/csye6225.log', encoding='utf-8', level=logging.INFO)
+logging.basicConfig(filename='/home/ec2-user/csye6225.log', encoding='utf-8', level=logging.INFO)
+
 
 app = Flask(__name__)
 app.config.from_object(AppConfig)
@@ -145,6 +156,8 @@ def create_user():
     """Returns created user or validation error message."""
 
     try:
+        logger.info("creating user records")
+        statsd.incr('endpoint.user.http.post')
         # creates user object
         user = Users(
             id=str(uuid.uuid4()),
@@ -177,10 +190,12 @@ def authenticated_user():
     """Returns authenticated stored or updated user details."""
 
     try:
+        logger.info("authenticating user")
         # current_user returns user object as returned from authenticator
         user = auth.current_user()
         if request.method == "PUT":
-            # user can only edit these field
+            statsd.incr('endpoint.user.http.put')
+            # user can only edit these fields
             allowed_edit_fields = ["first_name", "last_name", "password"]
 
             for key in request.json:
@@ -190,6 +205,8 @@ def authenticated_user():
 
             # commit above changes to user in database
             db.session.commit()
+        statsd.incr('endpoint.user.http.get')
+        logger.info("user authenticated")
 
         # Returns the user using model serializer
         return user_schema.dump(user), 200
@@ -213,6 +230,8 @@ def get_user_image():
     """Returns authenticated stored user image details."""
 
     try:
+        logger.info("fetching user profile image")
+        statsd.incr('endpoint.image.http.get')
         # current_user returns user object as returned from authenticator
         user = auth.current_user()
         image = db.session.query(Images).filter_by(user_id=user.id).first()
@@ -231,6 +250,8 @@ def create_user_image():
     """Returns uploaded user image details."""
 
     try:
+        logger.info("profile creation endpoint started execution")
+        statsd.incr('endpoint.user.image.http.post')        
         # current_user returns user object as returned from authenticator
         user = auth.current_user()
 
@@ -275,6 +296,8 @@ def user_delete_image():
     """Returns user image delete confirmation."""
 
     try:
+        logger.info("image delete endpoint started execution")
+        statsd.incr('endpoint.image.http.delete')
         # current_user returns user object as returned from authenticator
         user = auth.current_user()
         image = db.session.query(Images).filter_by(user_id=user.id).first()
@@ -289,17 +312,22 @@ def user_delete_image():
             db.session.delete(image)
             db.session.commit()
             return message, status
-
+        logger.info("image deleted")
     except Exception as e:
         return f"Bad Request: {e}", 400
 
 
 # Health check GET API
-@app.route("/heal", methods=['GET'])
+
+@app.route("/health", methods=['GET'])
 def health():
+    logger=logging.getLogger()
+    logger.info("healthz endpoint executed")
+    statsd.incr('endpoint.healthz.http.get')
     return "200: Service is healthy and running ", 200
 
 
 if __name__ == '__main__':
+    statsd = StatsClient()
     #app.run(debug=True,host="0.0.0.0",port="8080")
     app.run(debug=True,host='0.0.0.0', port=8080)
