@@ -14,7 +14,7 @@
             "region": "us-east-1",
             "ami_name" : "My-custom-ami_{{timestamp}}",
             "ami_description": "Creating & Running a Test Amazon Machine Image",
-            "source_ami": "ami-033b95fb8079dc481",
+            "source_ami": "ami-0c02fb55956c7d316",
             "instance_type": "t2.micro",
             "ssh_username" : "ec2-user",
             "ami_users" : [
@@ -45,68 +45,90 @@
                 "source": "requirements.txt",
                 "destination": "requirements.txt"
             },
+
             {
                 "type": "file",
                 "source": "app-service.sh",
                 "destination": "app-service.sh"
             },
-
+           
             {
                 "type": "file",
-                "source": "flaskapp.service",
-                "destination": "flaskapp.service"
+                "source": "webservice-0.0.1.tar.gz",
+                "destination": "webservice-0.0.1.tar.gz"
+
             },
-          {
-                "type": "file",
-                "source": "release.zip",
-                "destination": "release.zip"
-            },
+
+            {
+				"type": "file",
+				"source": "cloudwatch-config.json",
+				"destination": "cloudwatch-config.json"
+			},
+
 
             {
                 "type": "shell",
                 "inline": [
                     "sleep 30",
+
+                    "sudo mv cloudwatch-config.json /opt/",
+                    
                     "sudo yum update -y",
+
+                    "echo '********************** yum updated ********************'",
+
                     "sudo yum groupinstall 'Development Tools' -y",
+
                     "sudo yum install openssl-devel libffi-devel bzip2-devel wget -y",
+
                     "sudo yum install python3",
 
-                    "echo '****************************************************************************Python is installed ****************************************************************************'",
+                    "echo '*******************************************************Python is installed ****************************************************************************'",
+                    
                     "sudo yum -y install python-pip",
 
-                    "echo '****************************************************************************PIP is installed ****************************************************************************'",
-                    "sudo yum -y install https://dev.mysql.com/get/mysql80-community-release-el7-5.noarch.rpm",
+                    "echo '********************************************************PIP is installed ****************************************************************************'",
 
-                    "echo '****************************************************************************Install epel*********************************************************************************'",
+                    "tar xvzf webservice-0.0.1.tar.gz",
 
-                    "sudo amazon-linux-extras install epel",
-
-                    "echo 'Install community server'",
-
-                    "sudo yum -y install mysql-community-server",
-
-                    "sudo systemctl enable --now mysqld",
-
-                    "systemctl status mysqld",
-
-                    "passwords=$(sudo grep 'temporary password' /var/log/mysqld.log | awk {'print $13'})",
-
-                    "mysql --connect-expired-password -u root -p$passwords -e \"ALTER USER 'root'@'localhost' IDENTIFIED BY 'Foram@711';\"",
-
-                    "mysql -u root -pForam@711 -e \"create database test;\"",
-                    
-                    "unzip release.zip -d webapp",
-                  
-                    "sudo cp flaskapp.service /etc/systemd/system",
+                    "sudo yum -y install polkit",
                   
                     "cp requirements.txt webapp",
                   
-                    "sudo systemctl start flaskapp.service",
-                  
-                    "sudo systemctl enable flaskapp.service",
+                    "cd ~",
                     
-                    "sudo systemctl status flaskapp.service"
-                    
+                    "sed -i 's/\r//g' app-service.sh",
+
+                    "sudo yum install -y ruby",
+
+                    "echo '********************** ruby installed ********************'",
+
+                    "sudo yum install -y wget",
+
+                    "echo '********************** install -y wget ********************'",
+
+                    "wget https://aws-codedeploy-us-east-1.s3.us-east-1.amazonaws.com/latest/install",
+
+                    "echo '********************** Bucket-name ********************'",
+
+                    "chmod +x ./install",
+
+                    "echo '********************** +x ./installed ********************'",
+
+                    "sudo ./install auto",
+
+                    "echo '**********************  Installed the latest version of the CodeDeploy agent ********************'",
+
+                    "sudo service codedeploy-agent start ",
+
+                    "echo '********************** Service is running: codedeploy-agent started ********************'",
+
+                    "sudo yum install -y amazon-cloudwatch-agent",
+
+                    "echo '**********************Amazon Cloudwatch Agent Installed**********************************'",
+
+                    "sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/cloudwatch-config.json -s"
+               
                   ]
               
                   }

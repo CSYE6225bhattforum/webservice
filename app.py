@@ -1,6 +1,13 @@
+from asyncio.log import logger
+import uuid
+import os
+import statsd
+
+
 from flask import Flask
 
-from flask import Flask, request, Blueprint
+
+from flask import Flask, request
 from flask_httpauth import HTTPBasicAuth
 
 from flask_bcrypt import Bcrypt
@@ -14,18 +21,20 @@ from password_validation import PasswordPolicy
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import validates
 
+from config import AppConfig
+from s3config import delete_image, upload_file
+from werkzeug.utils import secure_filename
+
+from statsd import StatsClient
+import logging
+import sys
+
+#logging.basicConfig(filename='C:/Users/foram/OneDrive/Desktop/csye6225.log', encoding='utf-8', level=logging.INFO)
+logging.basicConfig(filename='/home/ec2-user/csye6225.log', encoding='utf-8', level=logging.INFO)
+
+
 app = Flask(__name__)
-
-# Connection credentials
-db_user = 'root'
-
-# database config
-#app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@localhost/test'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['MYSQL_DATABASE_USER'] = 'root'
-app.config['MYSQL_DATABASE_PASSWORD'] = 'Foram@711'
-app.config['MYSQL_DATABASE_DB'] = 'test'
-app.config['MYSQL_DATABASE_HOST'] = 'localhost'
+app.config.from_object(AppConfig)
 
 db = SQLAlchemy(app)
 
@@ -41,7 +50,10 @@ bcrypt = Bcrypt()
 
 # User Database Model
 class Users(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(
+        db.String(255), primary_key=True, unique=True,
+        index=True
+    )
     username = db.Column(db.String(255), unique=True, index=True)
     _password = db.Column("password", db.String(128), nullable=False)
 
@@ -96,6 +108,18 @@ class Users(db.Model):
             raise ValueError("Invalid email")
 
 
+class Images(db.Model):
+
+    id = db.Column(
+        db.String(255), primary_key=True, 
+        index=True
+    )
+    user_id = db.Column(db.String(255), nullable=False, index=True)
+    filename = db.Column(db.String(255), nullable=False, index=True)
+    url = db.Column(db.String(255), unique=True, index=True)
+    upload_date = db.Column(db.Date, default=db.func.now())
+
+
 # Create models in database
 db.create_all()
 db.session.commit()
@@ -126,42 +150,17 @@ def authenticate(username, password):
     return False
 
 
-# User authenticated GET, PUT API
-@app.route("/v1/user/self", methods=['GET', 'PUT'])
-# login wall/decorator to guide unauthorized access
-@auth.login_required
-def authenticated_user():
-    """Returns authenticated stored or updated user details."""
-
-    try:
-        # current_user returns user object as returned from authenticator
-        user = auth.current_user()
-        if request.method == "PUT":
-            # user can only edit these field
-            allowed_edit_fields = ["first_name", "last_name", "password"]
-
-            for key in request.json:
-                if key in allowed_edit_fields:
-                    # update db user object with new value from request body
-                    setattr(user, key, request.json[key])
-
-            # commit above changes to user in database
-            db.session.commit()
-
-        # Returns the user using model serializer
-        return user_schema.dump(user), 200
-    except Exception as e:
-        return f"Bad Request: {e}", 400
-
-
 # Non-authenticated create user POST API
 @app.route("/v1/user", methods=['POST'])
 def create_user():
     """Returns created user or validation error message."""
 
     try:
+        logger.info("creating user records")
+        statsd.incr('endpoint.user.http.post')
         # creates user object
         user = Users(
+            id=str(uuid.uuid4()),
             username=request.json['username'],
             first_name=request.json['first_name'],
             last_name=request.json['last_name'],
@@ -183,12 +182,151 @@ def create_user():
         return f"Bad Request: {e}", 400
 
 
+# User authenticated GET, PUT API
+@app.route("/v1/user/self", methods=['GET', 'PUT'])
+# login wall/decorator to guide unauthorized access
+@auth.login_required
+def authenticated_user():
+    """Returns authenticated stored or updated user details."""
+
+    try:
+        logger.info("authenticating user")
+        # current_user returns user object as returned from authenticator
+        user = auth.current_user()
+        if request.method == "PUT":
+            statsd.incr('endpoint.user.http.put')
+            # user can only edit these fields
+            allowed_edit_fields = ["first_name", "last_name", "password"]
+
+            for key in request.json:
+                if key in allowed_edit_fields:
+                    # update db user object with new value from request body
+                    setattr(user, key, request.json[key])
+
+            # commit above changes to user in database
+            db.session.commit()
+        statsd.incr('endpoint.user.http.get')
+        logger.info("user authenticated")
+
+        # Returns the user using model serializer
+        return user_schema.dump(user), 200
+    except Exception as e:
+        return f"Bad Request: {e}", 400
+
+
+# Image Serializer
+class ImageSchema(SQLAlchemyAutoSchema):
+    class Meta:
+        model = Images
+
+image_schema = ImageSchema()
+
+
+# User Image authenticated GET API
+@app.route("/v1/user/self/pic", methods=['GET'])
+# login wall/decorator to guide unauthorized access
+@auth.login_required
+def get_user_image():
+    """Returns authenticated stored user image details."""
+
+    try:
+        logger.info("fetching user profile image")
+        statsd.incr('endpoint.image.http.get')
+        # current_user returns user object as returned from authenticator
+        user = auth.current_user()
+        image = db.session.query(Images).filter_by(user_id=user.id).first()
+        if image:
+            return image_schema.dump(image), 200
+        return "Not Found", 404
+    except Exception as e:
+        return f"Bad Request: {e}", 400
+
+
+# User Image authenticated POST API
+@app.route("/v1/user/self/pic", methods=['POST'])
+# login wall/decorator to guide unauthorized access
+@auth.login_required
+def create_user_image():
+    """Returns uploaded user image details."""
+
+    try:
+        logger.info("profile creation endpoint started execution")
+        statsd.incr('endpoint.user.image.http.post')        
+        # current_user returns user object as returned from authenticator
+        user = auth.current_user()
+
+        # fetch file
+        file = request.files['file']
+        filename = secure_filename(file.filename)
+        url, status = upload_file(file, f"{user.id}/{filename}")
+        if status != 200:
+            # then url var contains error message
+            return url, status
+
+        # get or create image object for database
+        image = db.session.query(Images).filter_by(user_id=user.id).first()
+        if not image:
+
+            image = Images(id=str(uuid.uuid4()), user_id=user.id)
+
+        else:
+            message, status = delete_image(f"{user.id}/{image.filename}")
+            db.session.delete(image)
+            db.session.commit()
+
+            image = Images(user_id=user.id)             
+
+        image.filename = filename
+        image.url = url
+        # add image object to database session
+        db.session.add(image)
+        # commit the object to database from session
+        db.session.commit()
+        return image_schema.dump(image), 201
+    except Exception as e:
+        # generalized error
+        return f"Bad Request: {e}", 400
+
+
+# User Image authenticated DELETE API
+@app.route("/v1/user/self/pic", methods=['DELETE'])
+# login wall/decorator to guide unauthorized access
+@auth.login_required
+def user_delete_image():
+    """Returns user image delete confirmation."""
+
+    try:
+        logger.info("image delete endpoint started execution")
+        statsd.incr('endpoint.image.http.delete')
+        # current_user returns user object as returned from authenticator
+        user = auth.current_user()
+        image = db.session.query(Images).filter_by(user_id=user.id).first()
+        if not image:
+            return "Not Found", 404
+        
+        message, status = delete_image(f"{user.id}/{image.filename}")
+        if status != 204:
+            return message, status
+        if status ==204:
+            #deleting image from database
+            db.session.delete(image)
+            db.session.commit()
+            return message, status
+        logger.info("image deleted")
+    except Exception as e:
+        return f"Bad Request: {e}", 400
+
+
 # Health check GET API
 @app.route("/health", methods=['GET'])
 def health():
+    logger=logging.getLogger()
+    logger.info("healthz endpoint executed")
+    statsd.incr('endpoint.healthz.http.get')
     return "200: Service is healthy and running ", 200
 
 
 if __name__ == '__main__':
+    statsd = StatsClient()
     #app.run(debug=True,host="0.0.0.0",port="8080")
     app.run(debug=True,host='0.0.0.0', port=8080)
