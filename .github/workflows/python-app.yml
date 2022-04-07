@@ -7,7 +7,7 @@ name: Python application
 on:
   pull_request:
     branches:
-      - maintests
+      - main
   # push:
   #   branches:
   #     - main

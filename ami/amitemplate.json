@@ -65,7 +65,6 @@
 				"destination": "cloudwatch-config.json"
 			},
 
-
             {
                 "type": "shell",
                 "inline": [

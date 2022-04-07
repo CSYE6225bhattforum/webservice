@@ -7,7 +7,7 @@ name: Python application
 on:
   push:
     branches:
-      - maintests
+      - main
 
 env:
   ARTIFACT_NAME: csye6225-webapp-${{ github.sha }}.zip
