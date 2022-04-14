@@ -45,10 +45,10 @@ GET - http://10.110.254.15:8080/healthz [NEW]
 
 ```bash
 {
-  "first_name": "Jane",
-  "last_name": "Doe",
+  "first_name": "Foram",
+  "last_name": "Bhatt",
   "password": "skdjfhskdfjhg",
-  "username": "jane.doe@example.com"
+  "username": "forambhatt1013@gmail.com"
 }
 ```
 

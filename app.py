@@ -1,15 +1,10 @@
-from asyncio.log import logger
 import uuid
-import os
-import statsd
 
+from statsd import StatsClient
 
 from flask import Flask
-
-
 from flask import Flask, request
 from flask_httpauth import HTTPBasicAuth
-
 from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
@@ -20,25 +15,17 @@ from password_validation import PasswordPolicy
 
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import validates
-
-from config import AppConfig
-from s3config import delete_image, upload_file
 from werkzeug.utils import secure_filename
 
-from statsd import StatsClient
-import logging
-import sys
+from app_config import config
+from app_logger import logger
+from aws_helper import DynamoDBClient, SNSClient, S3Client
 
 
-#logging.basicConfig(filename='C:/Users/foram/OneDrive/Desktop/csye6225.log', encoding='utf-8', level=logging.INFO)
-logging.basicConfig(filename='/home/ec2-user/csye6225.log', level=logging.INFO)
-
+statsd = StatsClient()
 
 app = Flask(__name__)
-app.config.from_object(AppConfig)
-
-#statsd client
-statsd = StatsClient()
+app.config.from_object(config)
 
 db = SQLAlchemy(app)
 
@@ -63,6 +50,8 @@ class Users(db.Model):
 
     first_name = db.Column(db.String(255), nullable=False, index=True)
     last_name = db.Column(db.String(255), nullable=False, index=True)
+
+    is_verified = db.Column(db.Boolean, default=False)
 
     account_created = db.Column(
         db.DateTime,
@@ -145,7 +134,7 @@ user_schema = UserSchema()
 def authenticate(username, password):
     # fetch user based on username sent in basic auth
     user = db.session.query(Users).filter_by(username=username).first()
-    if user and user.check_password(password):
+    if user and user.check_password(password) and user.is_verified:
         # when user is found and the hased password is verified with
         # basic auth's password, it returns user object 
         return user
@@ -160,7 +149,6 @@ def create_user():
     """Returns created user or validation error message."""
 
     try:
-        logger=logging.getLogger()
         logger.info("creating user records")
         statsd.incr('endpoint.user.http.post')
         # creates user object
@@ -175,6 +163,23 @@ def create_user():
         db.session.add(user)
         # commit the object to database from session
         db.session.commit()
+
+        # create verification token
+        token = str(uuid.uuid4())
+
+        # verification email
+        dynamodb = DynamoDBClient()
+        dynamodb.set_user_key(user.username)
+        ddb_put_response = dynamodb.put_user_item(token)
+        if ddb_put_response:
+            sns = SNSClient()
+            sns.publish_message({
+                "username": user.username,
+                "token": token
+            })
+        else:
+            return "Verification email already sent", 200
+
         return user_schema.dump(user), 201
     except KeyError as e:
         # validation error from missing request.json required fields
@@ -182,6 +187,49 @@ def create_user():
     except ValueError as e:
         # validation error from model (password, email)
         return f"Validation: {e}", 400
+    except Exception as e:
+        # generalized error
+        return f"Bad Request: {e}", 400
+
+
+ # Non-authenticated verify user GET API
+@app.route("/verify", methods=['GET'])
+def verify_user():
+    """Returns verified user or validation error message."""
+
+    try:
+        logger.info("verifying user")
+        logger.info(request.args)
+        statsd.incr('endpoint.user.verify.http.get')
+
+        args = request.args
+        username = args.get('username')
+        print(username)
+        request_token = args.get('token')
+        print(request_token)
+
+        # username = request.json['username']
+        # request_token = request.json['token']
+
+        # dynamo db actions
+        dynamodb = DynamoDBClient()
+        dynamodb.set_user_key(username)
+        dynamodb_item = dynamodb.get_user_item()
+        if dynamodb_item.get("token") == request_token:
+            # fetch user object
+            user = db.session.query(Users).filter_by(username=username).first()
+            if not user:
+                return f"user not found: {username}", 404
+            # mark user as verified
+            user.is_verified = True
+            # commit the object to database from session
+            db.session.commit()
+            # delete key from dynamodb
+            dynamodb.delete_user_item()
+            return user_schema.dump(user), 200
+        else:
+            return "Failed to verify token", 400
+
     except Exception as e:
         # generalized error
         return f"Bad Request: {e}", 400
@@ -195,7 +243,6 @@ def authenticated_user():
     """Returns authenticated stored or updated user details."""
 
     try:
-        logger=logging.getLogger()
         logger.info("authenticating user")
         # current_user returns user object as returned from authenticator
         user = auth.current_user()
@@ -211,7 +258,7 @@ def authenticated_user():
 
             # commit above changes to user in database
             db.session.commit()
-        logger=logging.getLogger()
+
         statsd.incr('endpoint.user.http.get')
         logger.info("user authenticated")
 
@@ -237,7 +284,6 @@ def get_user_image():
     """Returns authenticated stored user image details."""
 
     try:
-        logger=logging.getLogger()
         logger.info("fetching user profile image")
         statsd.incr('endpoint.image.http.get')
         # current_user returns user object as returned from authenticator
@@ -258,7 +304,6 @@ def create_user_image():
     """Returns uploaded user image details."""
 
     try:
-        logger=logging.getLogger()
         logger.info("profile creation endpoint started execution")
         statsd.incr('endpoint.user.image.http.post')        
         # current_user returns user object as returned from authenticator
@@ -267,7 +312,8 @@ def create_user_image():
         # fetch file
         file = request.files['file']
         filename = secure_filename(file.filename)
-        url, status = upload_file(file, f"{user.id}/{filename}")
+        s3 = S3Client()
+        url, status = s3.upload_file(file, f"{user.id}/{filename}")
         if status != 200:
             # then url var contains error message
             return url, status
@@ -275,11 +321,9 @@ def create_user_image():
         # get or create image object for database
         image = db.session.query(Images).filter_by(user_id=user.id).first()
         if not image:
-
             image = Images(id=str(uuid.uuid4()), user_id=user.id)
-
         else:
-            message, status = delete_image(f"{user.id}/{image.filename}")
+            message, status = s3.delete_image(f"{user.id}/{image.filename}")
             db.session.delete(image)
             db.session.commit()
 
@@ -305,7 +349,6 @@ def user_delete_image():
     """Returns user image delete confirmation."""
 
     try:
-        logger=logging.getLogger()
         logger.info("image delete endpoint started execution")
         statsd.incr('endpoint.image.http.delete')
         # current_user returns user object as returned from authenticator
@@ -314,7 +357,8 @@ def user_delete_image():
         if not image:
             return "Not Found", 404
         
-        message, status = delete_image(f"{user.id}/{image.filename}")
+        s3 = S3Client()
+        message, status = s3.delete_image(f"{user.id}/{image.filename}")
         if status != 204:
             return message, status
         if status ==204:
@@ -322,7 +366,7 @@ def user_delete_image():
             db.session.delete(image)
             db.session.commit()
             return message, status
-        logger=logging.getLogger()
+
         logger.info("image deleted")
     except Exception as e:
         return f"Bad Request: {e}", 400
@@ -330,9 +374,8 @@ def user_delete_image():
 
 # Health check GET API
 
-@app.route("/health", methods=['GET'])
+@app.route("/healthz", methods=['GET'])
 def health():
-    logger=logging.getLogger()
     logger.info("healthz endpoint executed")
     statsd.incr('endpoint.healthz.http.get')
     return "200: Service is healthy and running ", 200

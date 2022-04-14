@@ -1,8 +1,10 @@
 include requirements.txt
 include LICENSE
-include s3config.py
+include aws_helper.py
 include app.py
-include config.py
+include app_config.py
+include app_logger.py
+include aws_helper.py
 include test_healthz.py
 include env
 include scripts
