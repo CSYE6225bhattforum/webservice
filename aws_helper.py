@@ -1,9 +1,11 @@
 import json
+import datetime
+import time
 from multiprocessing.connection import Client
 import boto3
 from botocore.exceptions import NoCredentialsError, ClientError
 import datetime
-
+# from datetime import datetime
 from app_config import config
 from app_logger import logger
 
@@ -83,15 +85,25 @@ class DynamoDBClient:
 
     def get_user_item(self):
         item = self.table.get_item(Key=self.user_key)
-        return item.get("Items", {})
+        logger.info("aws helper file");
+        logger.info(item);
+        return item.get("Item", {})
+
 
     def put_user_item(self, token):
         # if not self.get_user_item():
         #     return False
-
         put_key = self.user_key
         put_key["token"] = token
-        # put_key["ttl"] = datetime.datetime.now() + datetime.timedelta(minutes=5)
+        #put_key["ttl"] = datetime.datetime.now() + datetime.timedelta(minutes=5)
+        #date_obj = datetime.datetime.now() + datetime.timedelta(minutes=5)
+        #date_to_str = date_obj.strftime("%y-%m-%dT%H:%M:%S")
+        date_obj = datetime.datetime.now() + datetime.timedelta(minutes=5)
+        unixtime2 = time.mktime(date_obj.timetuple())
+        #print("Timestamp of now: ", str(unixtime2)[0:10])      
+        put_key["ttl"] = str(unixtime2)
+        put_key["messageType"] = "Email"
+        put_key["messageSent"] = "No"
         return self.table.put_item(Item=put_key)
 
     def delete_user_item(self):
