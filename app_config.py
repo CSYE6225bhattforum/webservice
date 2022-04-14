@@ -3,21 +3,15 @@ import os
 
 # load_dotenv(override=True)
 
-
-
-BUCKET = os.environ.get("AWS_BUCKET_NAME")
-ACCESS_KEY_ID = os.environ.get("ACCESS_KEY_ID")
-SECRET_ACCESS_KEY = os.environ.get("SECRET_ACCESS_KEY")
-DB_HOST = os.environ.get("DB_HOST")
-DB_USERNAME = os.environ.get("DB_USERNAME")
-DB_PASSWORD = os.environ.get("DB_PASSWORD")
-DB_DATABASENAME = os.environ.get("DB_DATABASE")
-
 class AppConfig:
 
     DEBUG = True
     FLASK_ENV = os.environ.get("FLASK_ENV")
 
+    DB_HOST = os.environ.get("DB_HOST")
+    DB_USERNAME = os.environ.get("DB_USERNAME")
+    DB_PASSWORD = os.environ.get("DB_PASSWORD")
+    DB_DATABASENAME = os.environ.get("DB_DATABASE")
     SQLALCHEMY_DATABASE_URI = f'mysql+pymysql://csye6225:{DB_PASSWORD}@{DB_HOST}/csye6225'
     #SQLALCHEMY_DATABASE_URI = f'mysql+pymysql://csye6225:Foram711@csye6225.cavjyta1ysgv.us-east-1.rds.amazonaws.com'
 
@@ -30,3 +24,17 @@ class AppConfig:
     MYSQL_DATABASE_DB = DB_DATABASENAME
     # MYSQL_DATABASE_HOST = 'localhost'
     MYSQL_DATABASE_HOST = DB_HOST
+
+    # AWS
+    BUCKET = os.environ.get("AWS_BUCKET_NAME")
+    ACCESS_KEY_ID = os.environ.get("ACCESS_KEY_ID")
+    SECRET_ACCESS_KEY = os.environ.get("SECRET_ACCESS_KEY")
+
+    # AWS SNS
+    # AWS_REGION = os.environ.get("AWS_REGION")
+    AWS_REGION = "us-east-1"
+    SNS_TOPIC_ARN = "arn:aws:sns:us-east-1:927025957594:csye6225-myTopic"
+    DYNAMODB_USER_TABLE = "Account"
+
+
+config = AppConfig
