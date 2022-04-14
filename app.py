@@ -330,7 +330,7 @@ def user_delete_image():
 
 # Health check GET API
 
-@app.route("/heal", methods=['GET'])
+@app.route("/health", methods=['GET'])
 def health():
     logger=logging.getLogger()
     logger.info("healthz endpoint executed")
