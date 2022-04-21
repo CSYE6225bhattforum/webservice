@@ -12,7 +12,7 @@ class AppConfig:
     DB_USERNAME = os.environ.get("DB_USERNAME")
     DB_PASSWORD = os.environ.get("DB_PASSWORD")
     DB_DATABASENAME = os.environ.get("DB_DATABASE")
-    SQLALCHEMY_DATABASE_URI = f'mysql+pymysql://csye6225:{DB_PASSWORD}@{DB_HOST}/csye6225'
+    SQLALCHEMY_DATABASE_URI = f'mysql+pymysql://csye6225:{DB_PASSWORD}@{DB_HOST}/csye6225?ssl_ca=/tmp/certs/global-bundle.pem'
     #SQLALCHEMY_DATABASE_URI = f'mysql+pymysql://csye6225:Foram711@csye6225.cavjyta1ysgv.us-east-1.rds.amazonaws.com'
 
     #SQLALCHEMY_DATABASE_URI = f'mysql+pymysql://root:root@localhost/test'
