@@ -1,4 +1,6 @@
 import uuid
+import time
+import datetime
 
 from statsd import StatsClient
 
@@ -171,6 +173,7 @@ def create_user():
         dynamodb = DynamoDBClient()
         dynamodb.set_user_key(user.username)
         ddb_put_response = dynamodb.put_user_item(token)
+        logger.info(ddb_put_response)
         if ddb_put_response:
             sns = SNSClient()
             sns.publish_message({
@@ -199,34 +202,54 @@ def verify_user():
 
     try:
         logger.info("verifying user")
-        logger.info(request.args)
+        # logger.info(request.args)
         statsd.incr('endpoint.user.verify.http.get')
 
         args = request.args
-        username = args.get('username')
-        print(username)
+        username = args.get('email')
+        logger.info(username)
         request_token = args.get('token')
-        print(request_token)
+        logger.info(request_token)
 
-        # username = request.json['username']
-        # request_token = request.json['token']
+        # request_json = request.get_json()
+        # logger.info(request_json)
+        # username = request_json['username']
+        # logger.info(username)
+        # request_token = request_json['token']
+        # logger.info(request_token)
 
+        #username = request.json['username']
+        #request_token = request.json['token']
+        
         # dynamo db actions
         dynamodb = DynamoDBClient()
         dynamodb.set_user_key(username)
         dynamodb_item = dynamodb.get_user_item()
+        logger.info("verify function get dynamodb data")
+        logger.info(dynamodb_item)
+
         if dynamodb_item.get("token") == request_token:
             # fetch user object
             user = db.session.query(Users).filter_by(username=username).first()
+            logger.info(user)
             if not user:
                 return f"user not found: {username}", 404
+
+            # ************** Check if TTL expired *************
+            date_obj = datetime.datetime.now() + datetime.timedelta(minutes=0)
+            unixtime_now = time.mktime(date_obj.timetuple())
+            diff = unixtime_now - float(dynamodb_item.get("ttl"))
+
+            if diff > 0:
+                return f"Token expired", 404
+            
             # mark user as verified
             user.is_verified = True
             # commit the object to database from session
             db.session.commit()
             # delete key from dynamodb
             dynamodb.delete_user_item()
-            return user_schema.dump(user), 200
+            return "Verfied", 200 #user_schema.dump(user), 200
         else:
             return "Failed to verify token", 400
 
